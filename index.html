@@ -30,8 +30,8 @@
         
         /* Màn hình chờ & Bảng kê món */
         #waiting-screen { display: none; text-align: center; padding-top: 50px; }
-        .bill-header { display: flex; justify-content: space-between; font-weight: bold; color: var(--gold); border-bottom: 1px solid var(--gold); padding-bottom: 5px; margin-bottom: 10px; font-size: 0.85em; }
-        .bill-line { display: grid; grid-template-columns: 2fr 1fr 1.5fr; gap: 5px; font-size: 0.9em; padding: 10px 0; border-bottom: 1px dashed rgba(255,255,255,0.15); text-align: left; }
+        .bill-header { display: grid; grid-template-columns: 2.5fr 0.8fr 1.2fr 1.5fr; gap: 5px; font-weight: bold; color: var(--gold); border-bottom: 1px solid var(--gold); padding-bottom: 5px; margin-bottom: 10px; font-size: 0.75em; text-transform: uppercase; }
+        .bill-line { display: grid; grid-template-columns: 2.5fr 0.8fr 1.2fr 1.5fr; gap: 5px; font-size: 0.8em; padding: 10px 0; border-bottom: 1px dashed rgba(255,255,255,0.15); text-align: left; align-items: center; }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
     </style>
@@ -56,14 +56,15 @@
         <hr style="opacity: 0.3; margin: 15px 0;">
         
         <div class="bill-header">
-            <span style="width: 45%;">Tên món</span>
-            <span style="width: 20%; text-align: center;">SL</span>
-            <span style="width: 35%; text-align: right;">Thành tiền</span>
+            <span>Món</span>
+            <span class="text-center">SL</span>
+            <span class="text-right">Giá</span>
+            <span class="text-right">Tổng</span>
         </div>
         <div id="order-history" style="margin-bottom: 15px;"></div>
         
         <div style="text-align: right; border-top: 1px solid var(--gold); padding-top: 10px;">
-            <b style="font-size: 1.2em;">TỔNG CỘNG: <span id="wait-total" style="color:var(--gold);">0đ</span></b>
+            <b style="font-size: 1.1em;">TỔNG CỘNG: <span id="wait-total" style="color:var(--gold); font-size: 1.2em;">0đ</span></b>
         </div>
         <p style="font-style: italic; font-size: 0.8em; opacity: 0.6; margin-top: 25px;">Cảm ơn quý khách đã tin tưởng CHẠM!</p>
     </div>
@@ -93,7 +94,6 @@
 
     let cart = {};
 
-    // THEO DÕI ĐƠN HÀNG THỜI GIAN THỰC
     db.ref('orders').on('value', snap => {
         let myCurrentOrder = null;
         snap.forEach(child => {
@@ -116,7 +116,8 @@
                     <div class="bill-line">
                         <span style="font-weight: bold;">${item.name}</span>
                         <span class="text-center">${item.qty}</span>
-                        <span class="text-right">${subtotal.toLocaleString()}đ</span>
+                        <span class="text-right" style="opacity: 0.8;">${item.price.toLocaleString()}</span>
+                        <span class="text-right" style="color: var(--gold); font-weight: bold;">${subtotal.toLocaleString()}</span>
                     </div>`;
             });
             document.getElementById('order-history').innerHTML = htmlItems;
@@ -129,7 +130,6 @@
         }
     });
 
-    // TẢI THỰC ĐƠN
     db.ref('menu').on('value', snap => {
         let h = '';
         snap.forEach(c => {
