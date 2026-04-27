@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đặt Món Quán Nướng</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; margin: 0; padding: 15px; }
+        .header { text-align: center; color: #d35400; background: white; padding: 10px; border-radius: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .item { background: white; padding: 15px; border-radius: 12px; margin-bottom: 12px; 
+                display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .item-info b { font-size: 1.1em; color: #2c3e50; }
+        .price { color: #e74c3c; font-weight: bold; margin-top: 5px; display: block; }
+        button { background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        button:active { background: #2ecc71; }
+        #cart-btn { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); 
+                    background: #d35400; color: white; padding: 15px 40px; border-radius: 30px; 
+                    font-weight: bold; display: none; box-shadow: 0 4px 15px rgba(0,0,0,0.3); border: none; z-index: 999; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔥 NƯỚNG TẠI NHÀ</h1>
+        <p id="table-info" style="font-weight: bold; color: #7f8c8d;">Đang tải số bàn...</p>
+    </div>
+
+    <div id="menu-list" style="margin-top: 20px; padding-bottom: 80px;">Đang tải thực đơn...</div>
+
+    <button id="cart-btn" onclick="sendOrder()">GỬI ĐƠN - <span id="count">0</span> MÓN</button>
+
+    <script>
+        // Cấu hình Firebase của bạn đã được dán vào đây
+        const firebaseConfig = {
+            apiKey: "AIzaSyD48i9LuaLL3alq-gyoqoUvhH9Ingse3oM",
+            authDomain: "quannuongnhatoi-1ce85.firebaseapp.com",
+            databaseURL: "https://quannuongnhatoi-1ce85-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "quannuongnhatoi-1ce85",
+            storageBucket: "quannuongnhatoi-1ce85.firebasestorage.app",
+            messagingSenderId: "1036759149619",
+            appId: "1:1036759149619:web:3d301711d7a2f683244746"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        // Tự động nhận diện bàn từ mã QR (ví dụ link: ...index.html?ban=05)
+        const urlParams = new URLSearchParams(window.location.search);
+        const table = urlParams.get('ban') || "Mang về";
+        document.getElementById('table-info').innerText = "Bàn số: " + table;
+
+        let cart = [];
+
+        // Lấy dữ liệu Menu đã import từ Firebase
+        db.ref('menu').on('value', (snapshot) => {
+            let html = '';
+            snapshot.forEach((child) => {
+                let mon = child.val();
+                html += `<div class="item">
+                    <div class="item-info">
+                        <b>${mon.name}</b>
+                        <span class="price">${mon.price.toLocaleString()}đ</span>
+                    </div>
+                    <button onclick="addToCart('${mon.name}', ${mon.price})">Thêm</button>
+                </div>`;
+            });
+            document.getElementById('menu-list').innerHTML = html;
+        });
+
+        function addToCart(name, price) {
+            cart.push({name, price});
+            document.getElementById('cart-btn').style.display = 'block';
+            document.getElementById('count').innerText = cart.length;
+        }
+
+        function sendOrder() {
+            if (cart.length === 0) return;
+            db.ref('orders').push({
+                table: table,
+                items: cart,
+                time: new Date().toLocaleTimeString('vi-VN'),
+                status: "Mới"
+            }).then(() => {
+                alert("Đặt món thành công! Quán đang chuẩn bị mâm cho bạn.");
+                cart = [];
+                document.getElementById('cart-btn').style.display = 'none';
+            });
+        }
+    </script>
+</body>
+</html>
