@@ -20,9 +20,10 @@
         input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: none; box-sizing: border-box; font-size: 16px; }
         .menu-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.08); padding: 15px; margin-bottom: 10px; border-radius: 15px; }
         .btn-add { background: var(--gold); border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        #cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1e3d1a; padding: 20px; display: none; text-align: center; border-radius: 25px 25px 0 0; box-shadow: 0 -5px 15px rgba(0,0,0,0.3); }
+        #cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1e3d1a; padding: 20px; display: none; text-align: center; border-radius: 25px 25px 0 0; box-shadow: 0 -5px 15px rgba(0,0,0,0.3); z-index: 999; }
         .btn-order { background: var(--gold); color: #000; border: none; padding: 15px; border-radius: 30px; font-weight: bold; font-size: 1.1em; width: 100%; text-transform: uppercase; }
         #waiting-screen { display: none; text-align: center; padding-top: 100px; }
+        .btn-clear { background: none; border: 1px solid #ff4d4d; color: #ff4d4d; padding: 5px 10px; border-radius: 8px; font-size: 0.8em; margin-top: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -34,21 +35,22 @@
         <input type="text" id="cust-name" placeholder="Tên của bạn (VD: Anh Quyết)">
         <input type="number" id="cust-phone" placeholder="Số điện thoại đối chiếu">
     </div>
-    <div id="menu-list" style="padding-bottom: 100px;"></div>
+    <div id="menu-list" style="padding-bottom: 120px;"></div>
 </div>
 
 <div id="waiting-screen" class="container">
     <div class="card" style="text-align: center;">
-        <h2 style="color:var(--gold); font-size: 2em;">Cảm ơn bạn!</h2>
-        <p style="font-size: 1.2em;">Đơn hàng của bạn đang được xử lý.</p>
+        <h2 style="color:var(--gold); font-size: 2em;">CHẠM ĐÃ NHẬN!</h2>
+        <p style="font-size: 1.2em;">Đơn hàng của bạn đang được chuẩn bị.</p>
         <p>Bàn <b id="wait-table" style="color:var(--gold); font-size: 1.5em;">--</b> vui lòng đợi trong giây lát.</p>
         <hr style="opacity: 0.2; margin: 20px 0;">
-        <p style="font-style: italic; opacity: 0.8;">Quán sẽ in hóa đơn và phục vụ bạn ngay!</p>
+        <p style="font-style: italic; opacity: 0.8;">Hệ thống sẽ tự động reset khi bạn thanh toán xong.</p>
     </div>
 </div>
 
 <div id="cart-bar">
     <button class="btn-order" onclick="sendOrder()">XÁC NHẬN ĐẶT MÓN (<span id="cart-count">0</span>)</button>
+    <button class="btn-clear" onclick="clearCart()">Xóa đơn đang chọn</button>
 </div>
 
 <script>
@@ -69,23 +71,29 @@
     document.getElementById('table-display').innerText = "BÀN SỐ: " + table;
     document.getElementById('wait-table').innerText = table;
 
-    let cart = [];
+    // KHỞI TẠO GIỎ HÀNG TỪ BỘ NHỚ MÁY
+    let cart = JSON.parse(localStorage.getItem('cham_cart_' + table)) || [];
+    updateCartUI();
 
-    // KIỂM TRA TRẠNG THÁI BÀN (Tự động khóa nếu đã có đơn)
+    // THEO DÕI TRẠNG THÁI THANH TOÁN TỪ ADMIN
     db.ref('orders').on('value', snap => {
         let isOrdered = false;
-        snap.forEach(c => { if(c.val().table === table) isOrdered = true; });
+        snap.forEach(c => { 
+            if(c.val().table === table) isOrdered = true; 
+        });
+
         if(isOrdered) {
             document.getElementById('main-app').style.display = 'none';
             document.getElementById('cart-bar').style.display = 'none';
             document.getElementById('waiting-screen').style.display = 'block';
         } else {
+            // NẾU ADMIN ĐÃ XOÁ ĐƠN (THANH TOÁN XONG) -> XOÁ SẠCH GIỎ HÀNG TRÊN ĐIỆN THOẠI KHÁCH
+            clearCart();
             document.getElementById('main-app').style.display = 'block';
             document.getElementById('waiting-screen').style.display = 'none';
         }
     });
 
-    // LẤY MENU TỪ FIREBASE
     db.ref('menu').on('value', snap => {
         let h = '';
         snap.forEach(c => {
@@ -100,8 +108,23 @@
 
     function addToCart(name, price) {
         cart.push({name, price});
-        document.getElementById('cart-bar').style.display = 'block';
-        document.getElementById('cart-count').innerText = cart.length;
+        localStorage.setItem('cham_cart_' + table, JSON.stringify(cart));
+        updateCartUI();
+    }
+
+    function updateCartUI() {
+        if(cart.length > 0) {
+            document.getElementById('cart-bar').style.display = 'block';
+            document.getElementById('cart-count').innerText = cart.length;
+        } else {
+            document.getElementById('cart-bar').style.display = 'none';
+        }
+    }
+
+    function clearCart() {
+        cart = [];
+        localStorage.removeItem('cham_cart_' + table);
+        updateCartUI();
     }
 
     function sendOrder() {
@@ -115,8 +138,8 @@
             items: cart,
             time: new Date().toLocaleTimeString('vi-VN')
         }).then(() => {
-            alert("Đặt món thành công! Vui lòng đợi trong giây lát.");
-            cart = [];
+            alert("Đặt món thành công!");
+            // Không xóa cart ở đây, cart sẽ được xóa khi Admin bấm thanh toán (trigger bởi listener phía trên)
         });
     }
 </script>
