@@ -10,7 +10,7 @@
         :root { --gold: #d4af37; --dark: #0f1a11; }
         body { 
             font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0;
-            background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?q=80&w=1000');
+            background: linear-gradient(rgba(0,0,0,0.85), rgba(0,0,0,0.85)), url('https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?q=80&w=1000');
             background-size: cover; background-attachment: fixed; color: white;
         }
         .container { padding: 20px; max-width: 500px; margin: auto; }
@@ -22,15 +22,18 @@
         
         .menu-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.08); padding: 15px; margin-bottom: 10px; border-radius: 15px; }
         .item-controls { display: flex; align-items: center; gap: 10px; }
-        .btn-qty { background: var(--gold); border: none; width: 30px; height: 30px; border-radius: 5px; font-weight: bold; cursor: pointer; }
-        .qty-num { font-weight: bold; min-width: 20px; text-align: center; }
-        .btn-add { background: var(--gold); border: none; padding: 10px 15px; border-radius: 10px; font-weight: bold; cursor: pointer; color: #000; }
+        .btn-qty { background: var(--gold); border: none; width: 32px; height: 32px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 18px; }
+        .qty-num { font-weight: bold; min-width: 25px; text-align: center; color: var(--gold); }
         
         #cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1e3d1a; padding: 20px; display: none; text-align: center; border-radius: 25px 25px 0 0; box-shadow: 0 -5px 15px rgba(0,0,0,0.3); z-index: 1000; }
         .btn-order { background: var(--gold); color: #000; border: none; padding: 15px; border-radius: 30px; font-weight: bold; font-size: 1.1em; width: 100%; text-transform: uppercase; }
         
+        /* Màn hình chờ & Bảng kê món */
         #waiting-screen { display: none; text-align: center; padding-top: 50px; }
-        .bill-line { display: flex; justify-content: space-between; font-size: 0.95em; padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,0.2); }
+        .bill-header { display: flex; justify-content: space-between; font-weight: bold; color: var(--gold); border-bottom: 1px solid var(--gold); padding-bottom: 5px; margin-bottom: 10px; font-size: 0.85em; }
+        .bill-line { display: grid; grid-template-columns: 2fr 1fr 1.5fr; gap: 5px; font-size: 0.9em; padding: 10px 0; border-bottom: 1px dashed rgba(255,255,255,0.15); text-align: left; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
     </style>
 </head>
 <body>
@@ -49,18 +52,25 @@
     <div class="header"><h1>CHẠM</h1></div>
     <div class="card">
         <h2 style="color:var(--gold); font-size: 1.8em; margin-bottom: 5px;">ĐÃ GỬI ĐƠN!</h2>
-        <p>Bàn <b id="wait-table" style="color:var(--gold)">--</b> đang được phục vụ.</p>
-        <hr style="opacity: 0.3;">
-        <div id="order-history" style="text-align: left; margin: 15px 0;"></div>
-        <div style="text-align: right; margin-top: 10px;">
-            <b id="wait-total" style="color:var(--gold); font-size: 1.2em;">Tổng: 0đ</b>
+        <p>Bàn <b id="wait-table" style="color:var(--gold)">--</b> đang được chuẩn bị.</p>
+        <hr style="opacity: 0.3; margin: 15px 0;">
+        
+        <div class="bill-header">
+            <span style="width: 45%;">Tên món</span>
+            <span style="width: 20%; text-align: center;">SL</span>
+            <span style="width: 35%; text-align: right;">Thành tiền</span>
         </div>
-        <p style="font-style: italic; font-size: 0.8em; opacity: 0.6; margin-top: 20px;">Trang web sẽ tự reset sau khi quý khách thanh toán tại quầy.</p>
+        <div id="order-history" style="margin-bottom: 15px;"></div>
+        
+        <div style="text-align: right; border-top: 1px solid var(--gold); padding-top: 10px;">
+            <b style="font-size: 1.2em;">TỔNG CỘNG: <span id="wait-total" style="color:var(--gold);">0đ</span></b>
+        </div>
+        <p style="font-style: italic; font-size: 0.8em; opacity: 0.6; margin-top: 25px;">Cảm ơn quý khách đã tin tưởng CHẠM!</p>
     </div>
 </div>
 
 <div id="cart-bar">
-    <button class="btn-order" onclick="sendOrder()">XÁC NHẬN ĐẶT (<span id="cart-count">0</span> món)</button>
+    <button class="btn-order" onclick="sendOrder()">XÁC NHẬN ĐẶT MÓN</button>
 </div>
 
 <script>
@@ -81,8 +91,9 @@
     document.getElementById('table-display').innerText = "BÀN SỐ: " + table;
     document.getElementById('wait-table').innerText = table;
 
-    let cart = {}; // Dùng object để quản lý theo ID món cho dễ tăng giảm số lượng
+    let cart = {};
 
+    // THEO DÕI ĐƠN HÀNG THỜI GIAN THỰC
     db.ref('orders').on('value', snap => {
         let myCurrentOrder = null;
         snap.forEach(child => {
@@ -96,25 +107,29 @@
             document.getElementById('cart-bar').style.display = 'none';
             document.getElementById('waiting-screen').style.display = 'block';
             
-            let htmlItems = '<b style="color:var(--gold)">Món đã gọi:</b><br>';
+            let htmlItems = '';
             let total = 0;
             myCurrentOrder.items.forEach(item => {
-                total += (item.price * item.qty);
-                htmlItems += `<div class="bill-line">
-                    <span>${item.qty} x ${item.name}</span>
-                    <span>${(item.price * item.qty).toLocaleString()}đ</span>
-                </div>`;
+                let subtotal = item.price * item.qty;
+                total += subtotal;
+                htmlItems += `
+                    <div class="bill-line">
+                        <span style="font-weight: bold;">${item.name}</span>
+                        <span class="text-center">${item.qty}</span>
+                        <span class="text-right">${subtotal.toLocaleString()}đ</span>
+                    </div>`;
             });
             document.getElementById('order-history').innerHTML = htmlItems;
-            document.getElementById('wait-total').innerText = "Tổng: " + total.toLocaleString() + "đ";
+            document.getElementById('wait-total').innerText = total.toLocaleString() + "đ";
         } else {
             document.getElementById('main-app').style.display = 'block';
             document.getElementById('waiting-screen').style.display = 'none';
-            cart = {};
+            cart = {}; 
             updateCartUI();
         }
     });
 
+    // TẢI THỰC ĐƠN
     db.ref('menu').on('value', snap => {
         let h = '';
         snap.forEach(c => {
@@ -145,26 +160,21 @@
 
     function updateCartUI() {
         let count = 0;
-        for (let id in cart) {
-            count += cart[id].qty;
-        }
-        if(count > 0) {
-            document.getElementById('cart-bar').style.display = 'block';
-            document.getElementById('cart-count').innerText = count;
-        } else {
-            document.getElementById('cart-bar').style.display = 'none';
-        }
+        for (let id in cart) { count += cart[id].qty; }
+        document.getElementById('cart-bar').style.display = count > 0 ? 'block' : 'none';
     }
 
     function sendOrder() {
         const name = document.getElementById('cust-name').value;
         const phone = document.getElementById('cust-phone').value;
-        if(!name || !phone) return alert("Vui lòng nhập Tên và SĐT để CHẠM phục vụ!");
+        if(!name || !phone) return alert("Vui lòng nhập Tên và SĐT để Quán phục vụ!");
 
         let finalItems = [];
         for (let id in cart) {
             if (cart[id].qty > 0) finalItems.push(cart[id]);
         }
+
+        if(finalItems.length === 0) return alert("Bạn chưa chọn món nào!");
 
         db.ref('orders').push({
             table: table,
@@ -172,7 +182,7 @@
             items: finalItems,
             time: new Date().toLocaleTimeString('vi-VN')
         }).then(() => {
-            alert("Gửi đơn thành công!");
+            alert("Đặt món thành công!");
         });
     }
 </script>
