@@ -21,12 +21,14 @@
         input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: none; box-sizing: border-box; font-size: 16px; }
         
         .menu-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.08); padding: 15px; margin-bottom: 10px; border-radius: 15px; }
-        .btn-add { background: var(--gold); border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .item-controls { display: flex; align-items: center; gap: 10px; }
+        .btn-qty { background: var(--gold); border: none; width: 30px; height: 30px; border-radius: 5px; font-weight: bold; cursor: pointer; }
+        .qty-num { font-weight: bold; min-width: 20px; text-align: center; }
+        .btn-add { background: var(--gold); border: none; padding: 10px 15px; border-radius: 10px; font-weight: bold; cursor: pointer; color: #000; }
         
         #cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1e3d1a; padding: 20px; display: none; text-align: center; border-radius: 25px 25px 0 0; box-shadow: 0 -5px 15px rgba(0,0,0,0.3); z-index: 1000; }
         .btn-order { background: var(--gold); color: #000; border: none; padding: 15px; border-radius: 30px; font-weight: bold; font-size: 1.1em; width: 100%; text-transform: uppercase; }
         
-        /* Màn hình chờ */
         #waiting-screen { display: none; text-align: center; padding-top: 50px; }
         .bill-line { display: flex; justify-content: space-between; font-size: 0.95em; padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,0.2); }
     </style>
@@ -49,8 +51,7 @@
         <h2 style="color:var(--gold); font-size: 1.8em; margin-bottom: 5px;">ĐÃ GỬI ĐƠN!</h2>
         <p>Bàn <b id="wait-table" style="color:var(--gold)">--</b> đang được phục vụ.</p>
         <hr style="opacity: 0.3;">
-        <div id="order-history" style="text-align: left; margin: 15px 0;">
-            </div>
+        <div id="order-history" style="text-align: left; margin: 15px 0;"></div>
         <div style="text-align: right; margin-top: 10px;">
             <b id="wait-total" style="color:var(--gold); font-size: 1.2em;">Tổng: 0đ</b>
         </div>
@@ -63,7 +64,6 @@
 </div>
 
 <script>
-    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyD48i9LuaLL3alq-gyoqoUvhH9Ingse3oM",
         authDomain: "quannuongnhatoi-1ce85.firebaseapp.com",
@@ -81,12 +81,10 @@
     document.getElementById('table-display').innerText = "BÀN SỐ: " + table;
     document.getElementById('wait-table').innerText = table;
 
-    let cart = [];
+    let cart = {}; // Dùng object để quản lý theo ID món cho dễ tăng giảm số lượng
 
-    // --- CƠ CHẾ ĐỒNG BỘ: GIỮ ĐƠN TRÊN MÁY KHÁCH ---
     db.ref('orders').on('value', snap => {
         let myCurrentOrder = null;
-        // Tìm xem trên Firebase có đơn nào của số bàn này không
         snap.forEach(child => {
             if(child.val().table === table) {
                 myCurrentOrder = child.val();
@@ -94,7 +92,6 @@
         });
 
         if(myCurrentOrder) {
-            // NẾU CÓ ĐƠN: Hiện màn hình chờ, liệt kê món đã đặt
             document.getElementById('main-app').style.display = 'none';
             document.getElementById('cart-bar').style.display = 'none';
             document.getElementById('waiting-screen').style.display = 'block';
@@ -102,37 +99,61 @@
             let htmlItems = '<b style="color:var(--gold)">Món đã gọi:</b><br>';
             let total = 0;
             myCurrentOrder.items.forEach(item => {
-                total += item.price;
-                htmlItems += `<div class="bill-line"><span>${item.name}</span><span>${item.price.toLocaleString()}đ</span></div>`;
+                total += (item.price * item.qty);
+                htmlItems += `<div class="bill-line">
+                    <span>${item.qty} x ${item.name}</span>
+                    <span>${(item.price * item.qty).toLocaleString()}đ</span>
+                </div>`;
             });
             document.getElementById('order-history').innerHTML = htmlItems;
             document.getElementById('wait-total').innerText = "Tổng: " + total.toLocaleString() + "đ";
         } else {
-            // NẾU KHÔNG CÓ ĐƠN (Admin đã xóa bàn): Hiện Menu đặt món
             document.getElementById('main-app').style.display = 'block';
             document.getElementById('waiting-screen').style.display = 'none';
-            cart = []; // Reset giỏ hàng tạm
-            document.getElementById('cart-bar').style.display = 'none';
+            cart = {};
+            updateCartUI();
         }
     });
 
-    // Tải Menu từ Firebase
     db.ref('menu').on('value', snap => {
         let h = '';
         snap.forEach(c => {
             let m = c.val();
+            let mId = c.key;
             h += `<div class="menu-item">
-                <div><b>${m.name}</b><br><small>${m.price.toLocaleString()}đ / ${m.unit || 'Đĩa'}</small></div>
-                <button class="btn-add" onclick="addToCart('${m.name}', ${m.price})">THÊM</button>
+                <div><b>${m.name}</b><br><small>${m.price.toLocaleString()}đ / ${m.unit || 'Món'}</small></div>
+                <div class="item-controls">
+                    <button class="btn-qty" onclick="changeQty('${mId}', '${m.name}', ${m.price}, -1)">-</button>
+                    <span class="qty-num" id="qty-${mId}">0</span>
+                    <button class="btn-qty" onclick="changeQty('${mId}', '${m.name}', ${m.price}, 1)">+</button>
+                </div>
             </div>`;
         });
         document.getElementById('menu-list').innerHTML = h;
     });
 
-    function addToCart(name, price) {
-        cart.push({name, price});
-        document.getElementById('cart-bar').style.display = 'block';
-        document.getElementById('cart-count').innerText = cart.length;
+    function changeQty(id, name, price, delta) {
+        if (!cart[id]) {
+            cart[id] = { name: name, price: price, qty: 0 };
+        }
+        cart[id].qty += delta;
+        if (cart[id].qty < 0) cart[id].qty = 0;
+        
+        document.getElementById('qty-' + id).innerText = cart[id].qty;
+        updateCartUI();
+    }
+
+    function updateCartUI() {
+        let count = 0;
+        for (let id in cart) {
+            count += cart[id].qty;
+        }
+        if(count > 0) {
+            document.getElementById('cart-bar').style.display = 'block';
+            document.getElementById('cart-count').innerText = count;
+        } else {
+            document.getElementById('cart-bar').style.display = 'none';
+        }
     }
 
     function sendOrder() {
@@ -140,10 +161,15 @@
         const phone = document.getElementById('cust-phone').value;
         if(!name || !phone) return alert("Vui lòng nhập Tên và SĐT để CHẠM phục vụ!");
 
+        let finalItems = [];
+        for (let id in cart) {
+            if (cart[id].qty > 0) finalItems.push(cart[id]);
+        }
+
         db.ref('orders').push({
             table: table,
             customer: name + " - " + phone,
-            items: cart,
+            items: finalItems,
             time: new Date().toLocaleTimeString('vi-VN')
         }).then(() => {
             alert("Gửi đơn thành công!");
