@@ -10,50 +10,60 @@
         :root { --gold: #d4af37; --dark: #0f1a11; }
         body { 
             font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0;
-            background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)), url('https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?q=80&w=1000');
+            background: linear-gradient(rgba(0,0,0,0.8), rgba(0,0,0,0.8)), url('https://images.unsplash.com/photo-1533777857889-4be7c70b33f7?q=80&w=1000');
             background-size: cover; background-attachment: fixed; color: white;
         }
         .container { padding: 20px; max-width: 500px; margin: auto; }
-        .header { text-align: center; padding: 40px 0; }
+        .header { text-align: center; padding: 30px 0; }
         .header h1 { font-size: 3.5em; font-weight: 800; margin: 0; letter-spacing: 10px; color: var(--gold); font-style: italic; text-shadow: 2px 2px 10px rgba(0,0,0,0.5); }
+        
         .card { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 20px; border-radius: 20px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
         input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: none; box-sizing: border-box; font-size: 16px; }
+        
         .menu-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.08); padding: 15px; margin-bottom: 10px; border-radius: 15px; }
         .btn-add { background: var(--gold); border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        #cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1e3d1a; padding: 20px; display: none; text-align: center; border-radius: 25px 25px 0 0; box-shadow: 0 -5px 15px rgba(0,0,0,0.3); z-index: 999; }
+        
+        #cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1e3d1a; padding: 20px; display: none; text-align: center; border-radius: 25px 25px 0 0; box-shadow: 0 -5px 15px rgba(0,0,0,0.3); z-index: 1000; }
         .btn-order { background: var(--gold); color: #000; border: none; padding: 15px; border-radius: 30px; font-weight: bold; font-size: 1.1em; width: 100%; text-transform: uppercase; }
-        #waiting-screen { display: none; text-align: center; padding-top: 100px; }
-        .btn-clear { background: none; border: 1px solid #ff4d4d; color: #ff4d4d; padding: 5px 10px; border-radius: 8px; font-size: 0.8em; margin-top: 10px; cursor: pointer; }
+        
+        /* Màn hình chờ */
+        #waiting-screen { display: none; text-align: center; padding-top: 50px; }
+        .bill-line { display: flex; justify-content: space-between; font-size: 0.95em; padding: 8px 0; border-bottom: 1px dashed rgba(255,255,255,0.2); }
     </style>
 </head>
 <body>
 
 <div id="main-app" class="container">
-    <div class="header"><h1>CHẠM</h1><p id="table-display" style="letter-spacing: 3px; font-weight: bold;">Đang tải bàn...</p></div>
+    <div class="header"><h1>CHẠM</h1><p id="table-display" style="letter-spacing: 3px; font-weight: bold; color: var(--gold);">Đang tải bàn...</p></div>
     <div class="card" id="user-info">
         <h3 style="margin-top:0; color:var(--gold)">Thông tin đặt bàn</h3>
-        <input type="text" id="cust-name" placeholder="Tên của bạn (VD: Anh Quyết)">
-        <input type="number" id="cust-phone" placeholder="Số điện thoại đối chiếu">
+        <input type="text" id="cust-name" placeholder="Tên của bạn">
+        <input type="number" id="cust-phone" placeholder="Số điện thoại">
     </div>
     <div id="menu-list" style="padding-bottom: 120px;"></div>
 </div>
 
 <div id="waiting-screen" class="container">
-    <div class="card" style="text-align: center;">
-        <h2 style="color:var(--gold); font-size: 2em;">CHẠM ĐÃ NHẬN!</h2>
-        <p style="font-size: 1.2em;">Đơn hàng của bạn đang được chuẩn bị.</p>
-        <p>Bàn <b id="wait-table" style="color:var(--gold); font-size: 1.5em;">--</b> vui lòng đợi trong giây lát.</p>
-        <hr style="opacity: 0.2; margin: 20px 0;">
-        <p style="font-style: italic; opacity: 0.8;">Hệ thống sẽ tự động reset khi bạn thanh toán xong.</p>
+    <div class="header"><h1>CHẠM</h1></div>
+    <div class="card">
+        <h2 style="color:var(--gold); font-size: 1.8em; margin-bottom: 5px;">ĐÃ GỬI ĐƠN!</h2>
+        <p>Bàn <b id="wait-table" style="color:var(--gold)">--</b> đang được phục vụ.</p>
+        <hr style="opacity: 0.3;">
+        <div id="order-history" style="text-align: left; margin: 15px 0;">
+            </div>
+        <div style="text-align: right; margin-top: 10px;">
+            <b id="wait-total" style="color:var(--gold); font-size: 1.2em;">Tổng: 0đ</b>
+        </div>
+        <p style="font-style: italic; font-size: 0.8em; opacity: 0.6; margin-top: 20px;">Trang web sẽ tự reset sau khi quý khách thanh toán tại quầy.</p>
     </div>
 </div>
 
 <div id="cart-bar">
-    <button class="btn-order" onclick="sendOrder()">XÁC NHẬN ĐẶT MÓN (<span id="cart-count">0</span>)</button>
-    <button class="btn-clear" onclick="clearCart()">Xóa đơn đang chọn</button>
+    <button class="btn-order" onclick="sendOrder()">XÁC NHẬN ĐẶT (<span id="cart-count">0</span> món)</button>
 </div>
 
 <script>
+    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyD48i9LuaLL3alq-gyoqoUvhH9Ingse3oM",
         authDomain: "quannuongnhatoi-1ce85.firebaseapp.com",
@@ -71,29 +81,42 @@
     document.getElementById('table-display').innerText = "BÀN SỐ: " + table;
     document.getElementById('wait-table').innerText = table;
 
-    // KHỞI TẠO GIỎ HÀNG TỪ BỘ NHỚ MÁY
-    let cart = JSON.parse(localStorage.getItem('cham_cart_' + table)) || [];
-    updateCartUI();
+    let cart = [];
 
-    // THEO DÕI TRẠNG THÁI THANH TOÁN TỪ ADMIN
+    // --- CƠ CHẾ ĐỒNG BỘ: GIỮ ĐƠN TRÊN MÁY KHÁCH ---
     db.ref('orders').on('value', snap => {
-        let isOrdered = false;
-        snap.forEach(c => { 
-            if(c.val().table === table) isOrdered = true; 
+        let myCurrentOrder = null;
+        // Tìm xem trên Firebase có đơn nào của số bàn này không
+        snap.forEach(child => {
+            if(child.val().table === table) {
+                myCurrentOrder = child.val();
+            }
         });
 
-        if(isOrdered) {
+        if(myCurrentOrder) {
+            // NẾU CÓ ĐƠN: Hiện màn hình chờ, liệt kê món đã đặt
             document.getElementById('main-app').style.display = 'none';
             document.getElementById('cart-bar').style.display = 'none';
             document.getElementById('waiting-screen').style.display = 'block';
+            
+            let htmlItems = '<b style="color:var(--gold)">Món đã gọi:</b><br>';
+            let total = 0;
+            myCurrentOrder.items.forEach(item => {
+                total += item.price;
+                htmlItems += `<div class="bill-line"><span>${item.name}</span><span>${item.price.toLocaleString()}đ</span></div>`;
+            });
+            document.getElementById('order-history').innerHTML = htmlItems;
+            document.getElementById('wait-total').innerText = "Tổng: " + total.toLocaleString() + "đ";
         } else {
-            // NẾU ADMIN ĐÃ XOÁ ĐƠN (THANH TOÁN XONG) -> XOÁ SẠCH GIỎ HÀNG TRÊN ĐIỆN THOẠI KHÁCH
-            clearCart();
+            // NẾU KHÔNG CÓ ĐƠN (Admin đã xóa bàn): Hiện Menu đặt món
             document.getElementById('main-app').style.display = 'block';
             document.getElementById('waiting-screen').style.display = 'none';
+            cart = []; // Reset giỏ hàng tạm
+            document.getElementById('cart-bar').style.display = 'none';
         }
     });
 
+    // Tải Menu từ Firebase
     db.ref('menu').on('value', snap => {
         let h = '';
         snap.forEach(c => {
@@ -108,29 +131,14 @@
 
     function addToCart(name, price) {
         cart.push({name, price});
-        localStorage.setItem('cham_cart_' + table, JSON.stringify(cart));
-        updateCartUI();
-    }
-
-    function updateCartUI() {
-        if(cart.length > 0) {
-            document.getElementById('cart-bar').style.display = 'block';
-            document.getElementById('cart-count').innerText = cart.length;
-        } else {
-            document.getElementById('cart-bar').style.display = 'none';
-        }
-    }
-
-    function clearCart() {
-        cart = [];
-        localStorage.removeItem('cham_cart_' + table);
-        updateCartUI();
+        document.getElementById('cart-bar').style.display = 'block';
+        document.getElementById('cart-count').innerText = cart.length;
     }
 
     function sendOrder() {
         const name = document.getElementById('cust-name').value;
         const phone = document.getElementById('cust-phone').value;
-        if(!name || !phone) return alert("Vui lòng nhập Tên và SĐT để Quán phục vụ tốt nhất!");
+        if(!name || !phone) return alert("Vui lòng nhập Tên và SĐT để CHẠM phục vụ!");
 
         db.ref('orders').push({
             table: table,
@@ -138,8 +146,7 @@
             items: cart,
             time: new Date().toLocaleTimeString('vi-VN')
         }).then(() => {
-            alert("Đặt món thành công!");
-            // Không xóa cart ở đây, cart sẽ được xóa khi Admin bấm thanh toán (trigger bởi listener phía trên)
+            alert("Gửi đơn thành công!");
         });
     }
 </script>
