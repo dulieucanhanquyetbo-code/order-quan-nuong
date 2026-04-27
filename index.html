@@ -30,8 +30,8 @@
         
         /* Màn hình chờ & Bảng kê món */
         #waiting-screen { display: none; text-align: center; padding-top: 50px; }
-        .bill-header { display: grid; grid-template-columns: 2.5fr 0.8fr 1.2fr 1.5fr; gap: 5px; font-weight: bold; color: var(--gold); border-bottom: 1px solid var(--gold); padding-bottom: 5px; margin-bottom: 10px; font-size: 0.75em; text-transform: uppercase; }
-        .bill-line { display: grid; grid-template-columns: 2.5fr 0.8fr 1.2fr 1.5fr; gap: 5px; font-size: 0.8em; padding: 10px 0; border-bottom: 1px dashed rgba(255,255,255,0.15); text-align: left; align-items: center; }
+        .bill-header { display: grid; grid-template-columns: 2.2fr 0.6fr 1.2fr 1.5fr; gap: 5px; font-weight: bold; color: var(--gold); border-bottom: 1px solid var(--gold); padding-bottom: 5px; margin-bottom: 10px; font-size: 0.75em; text-transform: uppercase; }
+        .bill-line { display: grid; grid-template-columns: 2.2fr 0.6fr 1.2fr 1.5fr; gap: 5px; font-size: 0.8em; padding: 10px 0; border-bottom: 1px dashed rgba(255,255,255,0.15); text-align: left; align-items: center; }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
     </style>
@@ -116,7 +116,7 @@
                     <div class="bill-line">
                         <span style="font-weight: bold;">${item.name}</span>
                         <span class="text-center">${item.qty}</span>
-                        <span class="text-right" style="opacity: 0.8;">${item.price.toLocaleString()}</span>
+                        <span class="text-right">${item.price.toLocaleString()}</span>
                         <span class="text-right" style="color: var(--gold); font-weight: bold;">${subtotal.toLocaleString()}</span>
                     </div>`;
             });
