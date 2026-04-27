@@ -20,17 +20,19 @@
         .card { background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); padding: 20px; border-radius: 20px; margin-bottom: 20px; border: 1px solid rgba(255,255,255,0.1); }
         input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: none; box-sizing: border-box; font-size: 16px; }
         
+        /* Thực đơn chọn món */
         .menu-item { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.08); padding: 15px; margin-bottom: 10px; border-radius: 15px; }
         .item-controls { display: flex; align-items: center; gap: 10px; }
-        .btn-qty { background: var(--gold); border: none; width: 32px; height: 32px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 18px; }
+        .btn-qty { background: var(--gold); border: none; width: 32px; height: 32px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 18px; color: #000; }
         .qty-num { font-weight: bold; min-width: 25px; text-align: center; color: var(--gold); }
         
         #cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #1e3d1a; padding: 20px; display: none; text-align: center; border-radius: 25px 25px 0 0; box-shadow: 0 -5px 15px rgba(0,0,0,0.3); z-index: 1000; }
         .btn-order { background: var(--gold); color: #000; border: none; padding: 15px; border-radius: 30px; font-weight: bold; font-size: 1.1em; width: 100%; text-transform: uppercase; }
         
-        /* Màn hình chờ & Bảng kê món */
+        /* Màn hình hóa đơn chờ thanh toán */
         #waiting-screen { display: none; text-align: center; padding-top: 50px; }
-        .bill-header { display: grid; grid-template-columns: 2.2fr 0.6fr 1.2fr 1.5fr; gap: 5px; font-weight: bold; color: var(--gold); border-bottom: 1px solid var(--gold); padding-bottom: 5px; margin-bottom: 10px; font-size: 0.75em; text-transform: uppercase; }
+        /* Tỉ lệ cột: Món (2.2) - SL (0.6) - Giá (1.2) - Tổng (1.5) */
+        .bill-header { display: grid; grid-template-columns: 2.2fr 0.6fr 1.2fr 1.5fr; gap: 5px; font-weight: bold; color: var(--gold); border-bottom: 1px solid var(--gold); padding-bottom: 5px; margin-bottom: 10px; font-size: 0.75em; text-transform: uppercase; text-align: left; }
         .bill-line { display: grid; grid-template-columns: 2.2fr 0.6fr 1.2fr 1.5fr; gap: 5px; font-size: 0.8em; padding: 10px 0; border-bottom: 1px dashed rgba(255,255,255,0.15); text-align: left; align-items: center; }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
@@ -114,7 +116,7 @@
                 total += subtotal;
                 htmlItems += `
                     <div class="bill-line">
-                        <span style="font-weight: bold;">${item.name}</span>
+                        <span style="font-weight: bold; line-height: 1.2;">${item.name}</span>
                         <span class="text-center">${item.qty}</span>
                         <span class="text-right">${item.price.toLocaleString()}</span>
                         <span class="text-right" style="color: var(--gold); font-weight: bold;">${subtotal.toLocaleString()}</span>
@@ -135,8 +137,13 @@
         snap.forEach(c => {
             let m = c.val();
             let mId = c.key;
+            // Hiển thị ĐƠN GIÁ rõ ràng ngay trong thẻ menu-item
             h += `<div class="menu-item">
-                <div><b>${m.name}</b><br><small>${m.price.toLocaleString()}đ / ${m.unit || 'Món'}</small></div>
+                <div>
+                    <b>${m.name}</b><br>
+                    <span style="color: var(--gold); font-weight: bold;">${m.price.toLocaleString()}đ</span> 
+                    <small style="opacity: 0.6;">/ ${m.unit || 'Món'}</small>
+                </div>
                 <div class="item-controls">
                     <button class="btn-qty" onclick="changeQty('${mId}', '${m.name}', ${m.price}, -1)">-</button>
                     <span class="qty-num" id="qty-${mId}">0</span>
@@ -167,7 +174,7 @@
     function sendOrder() {
         const name = document.getElementById('cust-name').value;
         const phone = document.getElementById('cust-phone').value;
-        if(!name || !phone) return alert("Vui lòng nhập Tên và SĐT để Quán phục vụ!");
+        if(!name || !phone) return alert("Vui lòng nhập Tên và SĐT để CHẠM phục vụ!");
 
         let finalItems = [];
         for (let id in cart) {
